@@ -1,17 +1,17 @@
+//HistorialBusquedaService.java
 package com.example.demo.service;
 
 import com.example.demo.model.HistorialBusqueda;
 import com.example.demo.repository.HistorialBusquedaRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.util.List;
+import java.util.Optional;
 
-@Service
 public class HistorialBusquedaService {
-    @Autowired
-    private HistorialBusquedaRepository historialRepository;
+    private final HistorialBusquedaRepository historialRepository;
+
+    public HistorialBusquedaService(HistorialBusquedaRepository historialRepository) {
+        this.historialRepository = historialRepository;
+    }
 
     public HistorialBusqueda guardarBusqueda(HistorialBusqueda busqueda) {
         if (busqueda.getUsuario() == null || busqueda.getUsuario().getIdUsuario() == null) {
@@ -27,19 +27,19 @@ public class HistorialBusquedaService {
         return historialRepository.findAll();
     }
 
-    public HistorialBusqueda obtenerBusquedaPorId(Integer id) {
-        return historialRepository.findById(id).orElse(null);
+    public Optional<HistorialBusqueda> obtenerBusquedaPorId(Integer id) {
+        return historialRepository.findById(id);
     }
 
     public void eliminarBusqueda(Integer id) {
-        if (!historialRepository.existsById(id)) {
+        if (!historialRepository.findById(id).isPresent()) {
             throw new IllegalArgumentException("La búsqueda con ID " + id + " no existe");
         }
-        historialRepository.deleteById(id);
+        historialRepository.delete(id);
     }
 
     public List<HistorialBusqueda> obtenerBusquedasPorUsuario(Integer idUsuario) {
-        return historialRepository.findByUsuarioIdUsuarioOrderByFechaBusquedaDesc(idUsuario);
+        return historialRepository.findByUsuarioIdUsuario(idUsuario);
     }
 
     public List<HistorialBusqueda> buscarPorTermino(String termino) {
@@ -49,7 +49,6 @@ public class HistorialBusquedaService {
         return historialRepository.findByTerminoBusquedaContainingIgnoreCase(termino);
     }
 
-    @Transactional
     public void limpiarHistorialUsuario(Integer idUsuario) {
         historialRepository.deleteByUsuarioIdUsuario(idUsuario);
     }

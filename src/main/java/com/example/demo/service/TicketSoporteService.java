@@ -1,16 +1,17 @@
+//TicketSoporteService.java
 package com.example.demo.service;
 
 import com.example.demo.model.TicketSoporte;
 import com.example.demo.repository.TicketSoporteRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-
 import java.util.List;
+import java.util.Optional;
 
-@Service
 public class TicketSoporteService {
-    @Autowired
-    private TicketSoporteRepository ticketSoporteRepository;
+    private final TicketSoporteRepository ticketSoporteRepository;
+
+    public TicketSoporteService(TicketSoporteRepository ticketSoporteRepository) {
+        this.ticketSoporteRepository = ticketSoporteRepository;
+    }
 
     public TicketSoporte saveTicket(TicketSoporte ticket) {
         return ticketSoporteRepository.save(ticket);
@@ -20,12 +21,12 @@ public class TicketSoporteService {
         return ticketSoporteRepository.findAll();
     }
 
-    public TicketSoporte getTicketById(Integer id) {
-        return ticketSoporteRepository.findById(id).orElse(null);
+    public Optional<TicketSoporte> getTicketById(Integer id) {
+        return ticketSoporteRepository.findById(id);
     }
 
     public void deleteTicket(Integer id) {
-        ticketSoporteRepository.deleteById(id);
+        ticketSoporteRepository.delete(id);
     }
 
     public List<TicketSoporte> getTicketsByUsuario(Integer idUsuario) {
@@ -36,12 +37,13 @@ public class TicketSoporteService {
         return ticketSoporteRepository.findByEstado(estado);
     }
 
-    public TicketSoporte updateEstadoTicket(Integer id, TicketSoporte.Estado nuevoEstado) {
-        TicketSoporte ticket = ticketSoporteRepository.findById(id).orElse(null);
-        if (ticket != null) {
+    public Optional<TicketSoporte> updateEstadoTicket(Integer id, TicketSoporte.Estado nuevoEstado) {
+        Optional<TicketSoporte> ticketOpt = ticketSoporteRepository.findById(id);
+        if (ticketOpt.isPresent()) {
+            TicketSoporte ticket = ticketOpt.get();
             ticket.setEstado(nuevoEstado);
-            return ticketSoporteRepository.save(ticket);
+            return Optional.of(ticketSoporteRepository.save(ticket));
         }
-        return null;
+        return Optional.empty();
     }
 }

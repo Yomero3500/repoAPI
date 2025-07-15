@@ -1,16 +1,17 @@
+//ResenaService.java
 package com.example.demo.service;
 
 import com.example.demo.model.Resena;
 import com.example.demo.repository.ResenaRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-
 import java.util.List;
+import java.util.Optional;
 
-@Service
 public class ResenaService {
-    @Autowired
-    private ResenaRepository resenaRepository;
+    private final ResenaRepository resenaRepository;
+
+    public ResenaService(ResenaRepository resenaRepository) {
+        this.resenaRepository = resenaRepository;
+    }
 
     public Resena saveResena(Resena resena) {
         // Validación de calificación (1-5)
@@ -24,19 +25,19 @@ public class ResenaService {
         return resenaRepository.findAll();
     }
 
-    public Resena getResenaById(Integer id) {
-        return resenaRepository.findById(id).orElse(null);
+    public Optional<Resena> getResenaById(Integer id) {
+        return resenaRepository.findById(id);
     }
 
     public void deleteResena(Integer id) {
-        resenaRepository.deleteById(id);
+        resenaRepository.delete(id);
     }
 
     public List<Resena> getResenasByProveedor(Integer idProveedor) {
-        return resenaRepository.findByProveedorIdProveedor(idProveedor);  // Cambiado a findByProveedorIdProveedor
+        return resenaRepository.findByProveedorIdProveedor(idProveedor);
     }
 
     public List<Resena> getResenasByUsuario(Integer idUsuario) {
-        return resenaRepository.findByUsuarioIdUsuario(idUsuario);  // Cambiado a findByUsuarioIdUsuario
+        return resenaRepository.findByUsuarioIdUsuario(idUsuario);
     }
 }

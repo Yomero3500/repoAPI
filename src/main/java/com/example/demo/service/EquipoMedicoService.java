@@ -1,16 +1,17 @@
+//EquipoMedicoService.java
 package com.example.demo.service;
 
 import com.example.demo.model.EquipoMedico;
 import com.example.demo.repository.EquipoMedicoRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-
 import java.util.List;
+import java.util.Optional;
 
-@Service
 public class EquipoMedicoService {
-    @Autowired
-    private EquipoMedicoRepository equipoMedicoRepository;
+    private final EquipoMedicoRepository equipoMedicoRepository;
+
+    public EquipoMedicoService(EquipoMedicoRepository equipoMedicoRepository) {
+        this.equipoMedicoRepository = equipoMedicoRepository;
+    }
 
     public EquipoMedico saveEquipoMedico(EquipoMedico equipoMedico) {
         return equipoMedicoRepository.save(equipoMedico);
@@ -20,12 +21,11 @@ public class EquipoMedicoService {
         return equipoMedicoRepository.findAll();
     }
 
-    public EquipoMedico getEquipoMedicoById(Integer id) {
-        return equipoMedicoRepository.findById(id).orElse(null);
+    public Optional<EquipoMedico> getEquipoMedicoById(Integer id) {
+        return equipoMedicoRepository.findById(id);
     }
 
     public void deleteEquipoMedico(Integer id) {
-        equipoMedicoRepository.deleteById(id);
+        equipoMedicoRepository.delete(id);
     }
-
 }

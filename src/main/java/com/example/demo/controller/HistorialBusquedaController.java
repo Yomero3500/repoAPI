@@ -1,54 +1,106 @@
+//HistorialBusquedaController.java
 package com.example.demo.controller;
 
 import com.example.demo.model.HistorialBusqueda;
 import com.example.demo.service.HistorialBusquedaService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.javalin.http.Context;
+import io.javalin.http.HttpStatus;
 import java.util.List;
+import java.util.Optional;
 
-@RestController
-@RequestMapping("/api/historial-busquedas")
 public class HistorialBusquedaController {
-    @Autowired
-    private HistorialBusquedaService historialService;
+    private final HistorialBusquedaService historialService;
+    private final ObjectMapper objectMapper;
 
-    @PostMapping
-    public ResponseEntity<HistorialBusqueda> registrarBusqueda(@RequestBody HistorialBusqueda busqueda) {
-        return ResponseEntity.ok(historialService.guardarBusqueda(busqueda));
+    public HistorialBusquedaController(HistorialBusquedaService historialService) {
+        this.historialService = historialService;
+        this.objectMapper = new ObjectMapper();
     }
 
-    @GetMapping
-    public List<HistorialBusqueda> obtenerTodoHistorial() {
-        return historialService.obtenerTodasBusquedas();
+    public void registrarBusqueda(Context ctx) {
+        try {
+            HistorialBusqueda busqueda = objectMapper.readValue(ctx.body(), HistorialBusqueda.class);
+            HistorialBusqueda savedBusqueda = historialService.guardarBusqueda(busqueda);
+            ctx.status(HttpStatus.CREATED).json(savedBusqueda);
+        } catch (IllegalArgumentException e) {
+            ctx.status(HttpStatus.BAD_REQUEST).json(e.getMessage());
+        } catch (Exception e) {
+            ctx.status(HttpStatus.BAD_REQUEST)
+                    .json("Error al registrar búsqueda: " + e.getMessage());
+        }
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<HistorialBusqueda> obtenerBusquedaPorId(@PathVariable Integer id) {
-        HistorialBusqueda busqueda = historialService.obtenerBusquedaPorId(id);
-        return busqueda != null ? ResponseEntity.ok(busqueda) : ResponseEntity.notFound().build();
+    public void obtenerTodoHistorial(Context ctx) {
+        ctx.json(historialService.obtenerTodasBusquedas());
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> eliminarBusqueda(@PathVariable Integer id) {
-        historialService.eliminarBusqueda(id);
-        return ResponseEntity.noContent().build();
+    public void obtenerBusquedaPorId(Context ctx) {
+        try {
+            Integer id = Integer.parseInt(ctx.pathParam("id"));
+            Optional<HistorialBusqueda> busqueda = historialService.obtenerBusquedaPorId(id);
+
+            if (busqueda.isPresent()) {
+                ctx.json(busqueda.get());
+            } else {
+                ctx.status(HttpStatus.NOT_FOUND)
+                        .json("Búsqueda no encontrada con ID: " + id);
+            }
+        } catch (NumberFormatException e) {
+            ctx.status(HttpStatus.BAD_REQUEST)
+                    .json("ID de búsqueda inválido");
+        }
     }
 
-    @GetMapping("/usuario/{idUsuario}")
-    public List<HistorialBusqueda> obtenerHistorialUsuario(@PathVariable Integer idUsuario) {
-        return historialService.obtenerBusquedasPorUsuario(idUsuario);
+    public void eliminarBusqueda(Context ctx) {
+        try {
+            Integer id = Integer.parseInt(ctx.pathParam("id"));
+            historialService.eliminarBusqueda(id);
+            ctx.status(HttpStatus.NO_CONTENT);
+        } catch (IllegalArgumentException e) {
+            if (e instanceof NumberFormatException) {
+                ctx.status(HttpStatus.BAD_REQUEST)
+                        .json("ID de búsqueda inválido");
+            } else {
+                ctx.status(HttpStatus.BAD_REQUEST).json(e.getMessage());
+            }
+        }
     }
 
-    @GetMapping("/buscar")
-    public List<HistorialBusqueda> buscarPorTermino(@RequestParam String termino) {
-        return historialService.buscarPorTermino(termino);
+    public void obtenerHistorialUsuario(Context ctx) {
+        try {
+            Integer idUsuario = Integer.parseInt(ctx.pathParam("idUsuario"));
+            List<HistorialBusqueda> busquedas = historialService.obtenerBusquedasPorUsuario(idUsuario);
+            ctx.json(busquedas);
+        } catch (NumberFormatException e) {
+            ctx.status(HttpStatus.BAD_REQUEST)
+                    .json("ID de usuario inválido");
+        }
     }
 
-    @DeleteMapping("/usuario/{idUsuario}")
-    public ResponseEntity<Void> limpiarHistorialUsuario(@PathVariable Integer idUsuario) {
-        historialService.limpiarHistorialUsuario(idUsuario);
-        return ResponseEntity.noContent().build();
+    public void buscarPorTermino(Context ctx) {
+        try {
+            String termino = ctx.queryParam("termino");
+            if (termino == null || termino.trim().isEmpty()) {
+                ctx.status(HttpStatus.BAD_REQUEST)
+                        .json("El parámetro 'termino' es requerido");
+                return;
+            }
+            List<HistorialBusqueda> resultados = historialService.buscarPorTermino(termino);
+            ctx.json(resultados);
+        } catch (IllegalArgumentException e) {
+            ctx.status(HttpStatus.BAD_REQUEST).json(e.getMessage());
+        }
+    }
+
+    public void limpiarHistorialUsuario(Context ctx) {
+        try {
+            Integer idUsuario = Integer.parseInt(ctx.pathParam("idUsuario"));
+            historialService.limpiarHistorialUsuario(idUsuario);
+            ctx.status(HttpStatus.NO_CONTENT);
+        } catch (NumberFormatException e) {
+            ctx.status(HttpStatus.BAD_REQUEST)
+                    .json("ID de usuario inválido");
+        }
     }
 }

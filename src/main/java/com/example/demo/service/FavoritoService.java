@@ -1,17 +1,17 @@
+//FavoritoService.java
 package com.example.demo.service;
 
 import com.example.demo.model.Favorito;
 import com.example.demo.repository.FavoritoRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.stereotype.Service;
-
 import java.util.List;
+import java.util.Optional;
 
-@Service
 public class FavoritoService {
-    @Autowired
-    private FavoritoRepository favoritoRepository;
+    private final FavoritoRepository favoritoRepository;
+
+    public FavoritoService(FavoritoRepository favoritoRepository) {
+        this.favoritoRepository = favoritoRepository;
+    }
 
     public Favorito saveFavorito(Favorito favorito) {
         // Validaciones manuales
@@ -32,7 +32,7 @@ public class FavoritoService {
 
         try {
             return favoritoRepository.save(favorito);
-        } catch (DataIntegrityViolationException e) {
+        } catch (Exception e) {
             throw new IllegalArgumentException("Error al guardar favorito: Verifica que el usuario y equipo existan");
         }
     }
@@ -41,15 +41,15 @@ public class FavoritoService {
         return favoritoRepository.findAll();
     }
 
-    public Favorito getFavoritoById(Integer id) {
-        return favoritoRepository.findById(id).orElse(null);
+    public Optional<Favorito> getFavoritoById(Integer id) {
+        return favoritoRepository.findById(id);
     }
 
     public void deleteFavorito(Integer id) {
-        if (!favoritoRepository.existsById(id)) {
+        if (!favoritoRepository.findById(id).isPresent()) {
             throw new IllegalArgumentException("El favorito con ID " + id + " no existe");
         }
-        favoritoRepository.deleteById(id);
+        favoritoRepository.delete(id);
     }
 
     public List<Favorito> getFavoritosByUsuario(Integer idUsuario) {

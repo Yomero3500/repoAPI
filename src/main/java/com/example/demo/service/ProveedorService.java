@@ -1,49 +1,45 @@
+//ProveedorService.java
 package com.example.demo.service;
 
 import com.example.demo.model.Proveedor;
 import com.example.demo.repository.ProveedorRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-
 import java.util.List;
+import java.util.Optional;
 
-@Service
 public class ProveedorService {
-    @Autowired
-    private ProveedorRepository proveedorRepository;
+    private final ProveedorRepository proveedorRepository;
 
-    // Guardar o actualizar proveedor
+    public ProveedorService(ProveedorRepository proveedorRepository) {
+        this.proveedorRepository = proveedorRepository;
+    }
+
     public Proveedor saveProveedor(Proveedor proveedor) {
         return proveedorRepository.save(proveedor);
     }
 
-    // Obtener todos los proveedores
     public List<Proveedor> getAllProveedores() {
         return proveedorRepository.findAll();
     }
 
-    // Obtener proveedor por ID
-    public Proveedor getProveedorById(Integer id) {
-        return proveedorRepository.findById(id).orElse(null);
+    public Optional<Proveedor> getProveedorById(Integer id) {
+        return proveedorRepository.findById(id);
     }
 
-    // Eliminar proveedor
     public void deleteProveedor(Integer id) {
-        proveedorRepository.deleteById(id);
+        proveedorRepository.delete(id);
     }
 
-    // Validar correo único
     public boolean existsByCorreoContacto(String correoContacto) {
-        return proveedorRepository.findByCorreoContacto(correoContacto) != null;
+        return proveedorRepository.findByCorreoContacto(correoContacto).isPresent();
     }
 
-    // Método adicional para marcar como validado
-    public Proveedor validarProveedor(Integer id) {
-        Proveedor proveedor = proveedorRepository.findById(id).orElse(null);
-        if (proveedor != null) {
+    public Optional<Proveedor> validarProveedor(Integer id) {
+        Optional<Proveedor> proveedorOpt = proveedorRepository.findById(id);
+        if (proveedorOpt.isPresent()) {
+            Proveedor proveedor = proveedorOpt.get();
             proveedor.setValidado(true);
-            return proveedorRepository.save(proveedor);
+            return Optional.of(proveedorRepository.save(proveedor));
         }
-        return null;
+        return Optional.empty();
     }
 }

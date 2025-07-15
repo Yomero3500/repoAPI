@@ -1,39 +1,35 @@
+//UsuarioService.java
 package com.example.demo.service;
 
 import com.example.demo.model.Usuario;
 import com.example.demo.repository.UsuarioRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-
 import java.util.List;
+import java.util.Optional;
 
-@Service
 public class UsuarioService {
-    @Autowired
-    private UsuarioRepository usuarioRepository;
+    private final UsuarioRepository usuarioRepository;
 
-    // Crear o actualizar usuario
+    public UsuarioService(UsuarioRepository usuarioRepository) {
+        this.usuarioRepository = usuarioRepository;
+    }
+
     public Usuario saveUsuario(Usuario usuario) {
         return usuarioRepository.save(usuario);
     }
 
-    // Obtener todos los usuarios
     public List<Usuario> getAllUsuarios() {
         return usuarioRepository.findAll();
     }
 
-    // Obtener usuario por ID
-    public Usuario getUsuarioById(Integer id) {
-        return usuarioRepository.findById(id).orElse(null);
+    public Optional<Usuario> getUsuarioById(Integer id) {
+        return usuarioRepository.findById(id);
     }
 
-    // Eliminar usuario
     public void deleteUsuario(Integer id) {
-        usuarioRepository.deleteById(id);
+        usuarioRepository.delete(id);
     }
 
-    // Validar correo único (opcional)
     public boolean existsByCorreo(String correo) {
-        return usuarioRepository.findByCorreo(correo) != null;
+        return usuarioRepository.findByCorreo(correo).isPresent();
     }
 }

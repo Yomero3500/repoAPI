@@ -1,62 +1,108 @@
+//ResenaController.java
 package com.example.demo.controller;
 
 import com.example.demo.model.Resena;
 import com.example.demo.service.ResenaService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.javalin.http.Context;
+import io.javalin.http.HttpStatus;
 import java.util.List;
+import java.util.Optional;
 
-@RestController
-@RequestMapping("/api/resenas")
 public class ResenaController {
-    @Autowired
-    private ResenaService resenaService;
+    private final ResenaService resenaService;
+    private final ObjectMapper objectMapper;
 
-    @PostMapping
-    public ResponseEntity<?> createResena(@RequestBody Resena resena) {
+    public ResenaController(ResenaService resenaService) {
+        this.resenaService = resenaService;
+        this.objectMapper = new ObjectMapper();
+    }
+
+    public void createResena(Context ctx) {
         try {
+            Resena resena = objectMapper.readValue(ctx.body(), Resena.class);
             Resena savedResena = resenaService.saveResena(resena);
-            return ResponseEntity.ok(savedResena);
+            ctx.status(HttpStatus.CREATED).json(savedResena);
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+            ctx.status(HttpStatus.BAD_REQUEST).json(e.getMessage());
+        } catch (Exception e) {
+            ctx.status(HttpStatus.BAD_REQUEST)
+                    .json("Error al crear la reseña: " + e.getMessage());
         }
     }
 
-    @GetMapping
-    public List<Resena> getAllResenas() {
-        return resenaService.getAllResenas();
+    public void getAllResenas(Context ctx) {
+        ctx.json(resenaService.getAllResenas());
     }
 
-    @GetMapping("/{id}")
-    public Resena getResenaById(@PathVariable Integer id) {
-        return resenaService.getResenaById(id);
-    }
-
-    @PutMapping("/{id}")
-    public ResponseEntity<?> updateResena(@PathVariable Integer id, @RequestBody Resena resena) {
+    public void getResenaById(Context ctx) {
         try {
-            resena.setIdResena(id);
-            Resena updatedResena = resenaService.saveResena(resena);
-            return ResponseEntity.ok(updatedResena);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+            Integer id = Integer.parseInt(ctx.pathParam("id"));
+            Optional<Resena> resena = resenaService.getResenaById(id);
+
+            if (resena.isPresent()) {
+                ctx.json(resena.get());
+            } else {
+                ctx.status(HttpStatus.NOT_FOUND)
+                        .json("Reseña no encontrada con ID: " + id);
+            }
+        } catch (NumberFormatException e) {
+            ctx.status(HttpStatus.BAD_REQUEST)
+                    .json("ID de reseña inválido");
         }
     }
 
-    @DeleteMapping("/{id}")
-    public void deleteResena(@PathVariable Integer id) {
-        resenaService.deleteResena(id);
+    public void updateResena(Context ctx) {
+        try {
+            Integer id = Integer.parseInt(ctx.pathParam("id"));
+            Resena resena = objectMapper.readValue(ctx.body(), Resena.class);
+            resena.setIdResena(id);
+
+            Resena updatedResena = resenaService.saveResena(resena);
+            ctx.json(updatedResena);
+        } catch (IllegalArgumentException e) {
+            ctx.status(HttpStatus.BAD_REQUEST).json(e.getMessage());
+        } catch (Exception e) {
+            if (e instanceof NumberFormatException) {
+                ctx.status(HttpStatus.BAD_REQUEST)
+                        .json("ID de reseña inválido");
+            } else {
+                ctx.status(HttpStatus.BAD_REQUEST)
+                        .json("Error al actualizar la reseña: " + e.getMessage());
+            }
+        }
     }
 
-    @GetMapping("/proveedor/{idProveedor}")
-    public List<Resena> getResenasByProveedor(@PathVariable Integer idProveedor) {
-        return resenaService.getResenasByProveedor(idProveedor);
+    public void deleteResena(Context ctx) {
+        try {
+            Integer id = Integer.parseInt(ctx.pathParam("id"));
+            resenaService.deleteResena(id);
+            ctx.status(HttpStatus.NO_CONTENT);
+        } catch (NumberFormatException e) {
+            ctx.status(HttpStatus.BAD_REQUEST)
+                    .json("ID de reseña inválido");
+        }
     }
 
-    @GetMapping("/usuario/{idUsuario}")
-    public List<Resena> getResenasByUsuario(@PathVariable Integer idUsuario) {
-        return resenaService.getResenasByUsuario(idUsuario);
+    public void getResenasByProveedor(Context ctx) {
+        try {
+            Integer idProveedor = Integer.parseInt(ctx.pathParam("idProveedor"));
+            List<Resena> resenas = resenaService.getResenasByProveedor(idProveedor);
+            ctx.json(resenas);
+        } catch (NumberFormatException e) {
+            ctx.status(HttpStatus.BAD_REQUEST)
+                    .json("ID de proveedor inválido");
+        }
+    }
+
+    public void getResenasByUsuario(Context ctx) {
+        try {
+            Integer idUsuario = Integer.parseInt(ctx.pathParam("idUsuario"));
+            List<Resena> resenas = resenaService.getResenasByUsuario(idUsuario);
+            ctx.json(resenas);
+        } catch (NumberFormatException e) {
+            ctx.status(HttpStatus.BAD_REQUEST)
+                    .json("ID de usuario inválido");
+        }
     }
 }

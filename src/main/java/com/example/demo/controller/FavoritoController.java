@@ -1,60 +1,92 @@
+//FavoritoController.java
 package com.example.demo.controller;
 
 import com.example.demo.model.Favorito;
 import com.example.demo.service.FavoritoService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.javalin.http.Context;
+import io.javalin.http.HttpStatus;
 import java.util.List;
+import java.util.Optional;
 
-@RestController
-@RequestMapping("/api/favoritos")
 public class FavoritoController {
-    @Autowired
-    private FavoritoService favoritoService;
+    private final FavoritoService favoritoService;
+    private final ObjectMapper objectMapper;
 
-    @PostMapping
-    public ResponseEntity<?> createFavorito(@RequestBody Favorito favorito) {
+    public FavoritoController(FavoritoService favoritoService) {
+        this.favoritoService = favoritoService;
+        this.objectMapper = new ObjectMapper();
+    }
+
+    public void createFavorito(Context ctx) {
         try {
+            Favorito favorito = objectMapper.readValue(ctx.body(), Favorito.class);
             Favorito savedFavorito = favoritoService.saveFavorito(favorito);
-            return ResponseEntity.ok(savedFavorito);
+            ctx.status(HttpStatus.CREATED).json(savedFavorito);
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+            ctx.status(HttpStatus.BAD_REQUEST).json(e.getMessage());
+        } catch (Exception e) {
+            ctx.status(HttpStatus.BAD_REQUEST)
+                    .json("Error al crear favorito: " + e.getMessage());
         }
     }
 
-    @GetMapping
-    public List<Favorito> getAllFavoritos() {
-        return favoritoService.getAllFavoritos();
+    public void getAllFavoritos(Context ctx) {
+        ctx.json(favoritoService.getAllFavoritos());
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<?> getFavoritoById(@PathVariable Integer id) {
-        Favorito favorito = favoritoService.getFavoritoById(id);
-        if (favorito == null) {
-            return ResponseEntity.notFound().build();
-        }
-        return ResponseEntity.ok(favorito);
-    }
-
-    @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteFavorito(@PathVariable Integer id) {
+    public void getFavoritoById(Context ctx) {
         try {
-            favoritoService.deleteFavorito(id);
-            return ResponseEntity.ok().build();
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+            Integer id = Integer.parseInt(ctx.pathParam("id"));
+            Optional<Favorito> favorito = favoritoService.getFavoritoById(id);
+
+            if (favorito.isPresent()) {
+                ctx.json(favorito.get());
+            } else {
+                ctx.status(HttpStatus.NOT_FOUND)
+                        .json("Favorito no encontrado con ID: " + id);
+            }
+        } catch (NumberFormatException e) {
+            ctx.status(HttpStatus.BAD_REQUEST)
+                    .json("ID de favorito inválido");
         }
     }
 
-    @GetMapping("/usuario/{idUsuario}")
-    public List<Favorito> getFavoritosByUsuario(@PathVariable Integer idUsuario) {
-        return favoritoService.getFavoritosByUsuario(idUsuario);
+    public void deleteFavorito(Context ctx) {
+        try {
+            Integer id = Integer.parseInt(ctx.pathParam("id"));
+            favoritoService.deleteFavorito(id);
+            ctx.status(HttpStatus.NO_CONTENT);
+        } catch (IllegalArgumentException e) {
+            // Este catch capturará tanto IllegalArgumentException como NumberFormatException
+            if (e instanceof NumberFormatException) {
+                ctx.status(HttpStatus.BAD_REQUEST)
+                        .json("ID de favorito inválido");
+            } else {
+                ctx.status(HttpStatus.BAD_REQUEST).json(e.getMessage());
+            }
+        }
     }
 
-    @GetMapping("/equipo/{idEquipo}")
-    public List<Favorito> getFavoritosByEquipo(@PathVariable Integer idEquipo) {
-        return favoritoService.getFavoritosByEquipo(idEquipo);
+    public void getFavoritosByUsuario(Context ctx) {
+        try {
+            Integer idUsuario = Integer.parseInt(ctx.pathParam("idUsuario"));
+            List<Favorito> favoritos = favoritoService.getFavoritosByUsuario(idUsuario);
+            ctx.json(favoritos);
+        } catch (NumberFormatException e) {
+            ctx.status(HttpStatus.BAD_REQUEST)
+                    .json("ID de usuario inválido");
+        }
+    }
+
+    public void getFavoritosByEquipo(Context ctx) {
+        try {
+            Integer idEquipo = Integer.parseInt(ctx.pathParam("idEquipo"));
+            List<Favorito> favoritos = favoritoService.getFavoritosByEquipo(idEquipo);
+            ctx.json(favoritos);
+        } catch (NumberFormatException e) {
+            ctx.status(HttpStatus.BAD_REQUEST)
+                    .json("ID de equipo inválido");
+        }
     }
 }

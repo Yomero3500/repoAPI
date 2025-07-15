@@ -1,46 +1,80 @@
+//TipoEquipoController.java
 package com.example.demo.controller;
 
 import com.example.demo.model.TipoEquipo;
 import com.example.demo.service.TipoEquipoService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.*;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.javalin.http.Context;
+import io.javalin.http.HttpStatus;
 
-import java.util.List;
+import java.util.Optional;
 
-@RestController
-@RequestMapping("/api/tipos-equipo")
 public class TipoEquipoController {
-    @Autowired
-    private TipoEquipoService tipoEquipoService;
+    private final TipoEquipoService tipoEquipoService;
+    private final ObjectMapper objectMapper;
 
-    // Crear un tipo de equipo
-    @PostMapping
-    public TipoEquipo createTipoEquipo(@RequestBody TipoEquipo tipoEquipo) {
-        return tipoEquipoService.saveTipoEquipo(tipoEquipo);
+    public TipoEquipoController(TipoEquipoService tipoEquipoService) {
+        this.tipoEquipoService = tipoEquipoService;
+        this.objectMapper = new ObjectMapper();
     }
 
-    // Obtener todos los tipos de equipo
-    @GetMapping
-    public List<TipoEquipo> getAllTiposEquipo() {
-        return tipoEquipoService.getAllTiposEquipo();
+    public void createTipoEquipo(Context ctx) {
+        try {
+            TipoEquipo tipoEquipo = objectMapper.readValue(ctx.body(), TipoEquipo.class);
+            TipoEquipo savedTipo = tipoEquipoService.saveTipoEquipo(tipoEquipo);
+            ctx.status(HttpStatus.CREATED).json(savedTipo);
+        } catch (Exception e) {
+            ctx.status(HttpStatus.BAD_REQUEST)
+                    .json("Error al crear el tipo de equipo: " + e.getMessage());
+        }
     }
 
-    // Obtener un tipo de equipo por ID
-    @GetMapping("/{id}")
-    public TipoEquipo getTipoEquipoById(@PathVariable Integer id) {
-        return tipoEquipoService.getTipoEquipoById(id);
+    public void getAllTiposEquipo(Context ctx) {
+        ctx.json(tipoEquipoService.getAllTiposEquipo());
     }
 
-    // Actualizar un tipo de equipo
-    @PutMapping("/{id}")
-    public TipoEquipo updateTipoEquipo(@PathVariable Integer id, @RequestBody TipoEquipo tipoEquipo) {
-        tipoEquipo.setIdTipo(id); // Asegura que el ID coincida
-        return tipoEquipoService.saveTipoEquipo(tipoEquipo);
+    public void getTipoEquipoById(Context ctx) {
+        try {
+            Integer id = Integer.parseInt(ctx.pathParam("id"));
+            Optional<TipoEquipo> tipoEquipo = tipoEquipoService.getTipoEquipoById(id);
+
+            if (tipoEquipo.isPresent()) {
+                ctx.json(tipoEquipo.get());
+            } else {
+                ctx.status(HttpStatus.NOT_FOUND)
+                        .json("Tipo de equipo no encontrado con ID: " + id);
+            }
+        } catch (NumberFormatException e) {
+            ctx.status(HttpStatus.BAD_REQUEST)
+                    .json("ID de tipo de equipo inválido");
+        }
     }
 
-    // Eliminar un tipo de equipo
-    @DeleteMapping("/{id}")
-    public void deleteTipoEquipo(@PathVariable Integer id) {
-        tipoEquipoService.deleteTipoEquipo(id);
+    public void updateTipoEquipo(Context ctx) {
+        try {
+            Integer id = Integer.parseInt(ctx.pathParam("id"));
+            TipoEquipo tipoEquipo = objectMapper.readValue(ctx.body(), TipoEquipo.class);
+            tipoEquipo.setIdTipo(id);
+
+            TipoEquipo updatedTipo = tipoEquipoService.saveTipoEquipo(tipoEquipo);
+            ctx.json(updatedTipo);
+        } catch (NumberFormatException e) {
+            ctx.status(HttpStatus.BAD_REQUEST)
+                    .json("ID de tipo de equipo inválido");
+        } catch (Exception e) {
+            ctx.status(HttpStatus.BAD_REQUEST)
+                    .json("Error al actualizar el tipo de equipo: " + e.getMessage());
+        }
+    }
+
+    public void deleteTipoEquipo(Context ctx) {
+        try {
+            Integer id = Integer.parseInt(ctx.pathParam("id"));
+            tipoEquipoService.deleteTipoEquipo(id);
+            ctx.status(HttpStatus.NO_CONTENT);
+        } catch (NumberFormatException e) {
+            ctx.status(HttpStatus.BAD_REQUEST)
+                    .json("ID de tipo de equipo inválido");
+        }
     }
 }
