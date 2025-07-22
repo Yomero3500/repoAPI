@@ -1,4 +1,3 @@
-// DemoApplication.java
 package com.example.demo;
 
 import com.example.demo.config.DatabaseConfig;
@@ -7,7 +6,6 @@ import com.example.demo.repository.*;
 import com.example.demo.routes.*;
 import com.example.demo.service.*;
 import io.javalin.Javalin;
-
 
 public class DemoApplication {
     public static void main(String[] args) {
@@ -54,6 +52,13 @@ public class DemoApplication {
         // Crear aplicación Javalin
         Javalin app = Javalin.create(config -> {
             config.plugins.enableDevLogging();
+
+            // Habilita CORS para permitir solicitudes desde otros orígenes (como tu frontend)
+            config.plugins.enableCors(cors -> {
+                cors.add(it -> {
+                    it.anyHost(); // Permite cualquier origen, ideal para desarrollo.
+                });
+            });
         });
 
         // Configurar rutas
@@ -74,6 +79,6 @@ public class DemoApplication {
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             app.stop();
             DatabaseConfig.close();
-        }));
-    }
+    }));
+}
 }

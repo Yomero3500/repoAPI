@@ -3,6 +3,7 @@ package com.example.demo.model;
 
 import jakarta.persistence.*;
 import java.sql.Timestamp;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 @Entity
 @Table(name = "usuarios")
@@ -19,6 +20,7 @@ public class Usuario {
     private String correo;
 
     @Column(name = "contraseña", nullable = false, length = 100)
+    @JsonProperty("contraseña")
     private String contraseña;
 
     @Enumerated(EnumType.STRING)
