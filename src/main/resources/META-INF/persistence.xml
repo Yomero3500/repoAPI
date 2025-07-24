@@ -5,13 +5,13 @@
     <persistence-unit name="demo-pu" transaction-type="RESOURCE_LOCAL">
         <provider>org.hibernate.jpa.HibernatePersistenceProvider</provider>
         <properties>
-            <property name="jakarta.persistence.jdbc.url" value="jdbc:mysql://184.73.246.53/EquipLinkDBBB"/>
-            <property name="jakarta.persistence.jdbc.user" value="jbj9"/>
-            <property name="jakarta.persistence.jdbc.password" value="274318294"/>
+            <property name="jakarta.persistence.jdbc.url" value="${DATABASE_URL}"/>
+            <property name="jakarta.persistence.jdbc.user" value="${DATABASE_USERNAME}"/>
+            <property name="jakarta.persistence.jdbc.password" value="${DATABASE_PASSWORD}"/>
             <property name="jakarta.persistence.jdbc.driver" value="com.mysql.cj.jdbc.Driver"/>
             <property name="hibernate.dialect" value="org.hibernate.dialect.MySQL8Dialect"/>
             <property name="hibernate.hbm2ddl.auto" value="update"/>
-            <property name="hibernate.show_sql" value="true"/>
+            <property name="hibernate.show_sql" value="false"/>
         </properties>
     </persistence-unit>
 </persistence>
