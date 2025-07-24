@@ -72,8 +72,12 @@ public class DemoApplication {
         new FavoritoRoutes(favoritoController).configureRoutes(app);
         new HistorialBusquedaRoutes(historialController).configureRoutes(app);
 
+        // Obtener puerto del ambiente o usar 8000 por defecto
+        String port = System.getenv("PORT");
+        int serverPort = port != null ? Integer.parseInt(port) : 8000;
+
         // Iniciar servidor
-        app.start(8000);
+        app.start(serverPort);
 
         // Manejar cierre
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
