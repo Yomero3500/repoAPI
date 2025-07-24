@@ -76,8 +76,10 @@ public class DemoApplication {
         String port = System.getenv("PORT");
         int serverPort = port != null ? Integer.parseInt(port) : 8000;
 
-        // Iniciar servidor
-        app.start(serverPort);
+        System.out.println("Starting server on port: " + serverPort);
+
+        // Iniciar servidor en todas las interfaces
+        app.start("0.0.0.0", serverPort);
 
         // Manejar cierre
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
